@@ -43,65 +43,67 @@ turtle.forward(5);   // Creates another line path connected to the first
 
 The turtle's output would be a standard Maker.js model containing paths that naturally form chains, making them compatible with all existing chain operations (filleting, dogbone joints, exporting, etc.).
 
-### 2. Command Object API
+### 2. Ergonomic API with Command Object Support
 
-**A turtle should accept command objects, similar to how the Text model processes glyph commands.**
+**The turtle should provide direct method calls for ergonomic use, while also supporting command objects for batch operations (like processing font glyphs).**
 
-Following the pattern established in the Text model, which processes font glyph command objects, the Turtle would accept command objects as its primary API. This provides a clean, consistent approach without the need for dual APIs.
+The primary API uses direct method calls to avoid verbose boilerplate, making the turtle easy and natural to use:
 
-**Command Objects to Support:**
-- `{ command: 'moveTo', args: [x, y] }` - Move without drawing
-- `{ command: 'lineTo', args: [x, y] }` - Draw a line
-- `{ command: 'bezierCurveTo', args: [x1, y1, x2, y2, x, y] }` - Draw a cubic Bezier curve
-- `{ command: 'quadraticCurveTo', args: [x1, y1, x, y] }` - Draw a quadratic Bezier curve
-- `{ command: 'closePath', args: [] }` - Close the current path
-
-Additionally, turtle-specific commands could be supported:
-- `{ command: 'forward', args: [distance] }` - Move forward in current heading
-- `{ command: 'back', args: [distance] }` - Move backward
-- `{ command: 'left', args: [angle] }` - Turn left (degrees)
-- `{ command: 'right', args: [angle] }` - Turn right (degrees)
-
-**Example conceptual API:**
+**Direct Method API:**
 ```javascript
 var turtle = new makerjs.models.Turtle();
 
-// Execute commands one at a time
-turtle.execute({ command: 'moveTo', args: [0, 0] });
-turtle.execute({ command: 'lineTo', args: [10, 0] });
-turtle.execute({ command: 'lineTo', args: [10, 10] });
-turtle.execute({ command: 'closePath', args: [] });
+// Simple, direct method calls
+turtle.moveTo(0, 0);
+turtle.lineTo(10, 0);
+turtle.lineTo(10, 10);
+turtle.closePath();
 
-// Or execute an array of commands
-turtle.executeAll([
+// Turtle-specific movement methods
+turtle.forward(10);
+turtle.right(90);
+turtle.back(5);
+turtle.left(45);
+
+// Curve methods
+turtle.bezierCurveTo(15, 0, 15, 5, 10, 10);
+turtle.quadraticCurveTo(5, 5, 0, 10);
+```
+
+**Command Object Support for Batch Operations:**
+
+When working with arrays of commands (such as from font glyphs or stored paths), command objects provide a convenient format:
+
+```javascript
+// Execute an array of command objects (e.g., from a font glyph)
+var glyphCommands = [
   { command: 'moveTo', args: [0, 0] },
   { command: 'lineTo', args: [10, 0] },
   { command: 'bezierCurveTo', args: [15, 0, 15, 5, 10, 10] },
   { command: 'closePath', args: [] }
-]);
+];
 
-// Turtle-specific commands work alongside path commands
-turtle.executeAll([
-  { command: 'forward', args: [10] },
-  { command: 'right', args: [90] },
-  { command: 'forward', args: [10] }
-]);
+turtle.executeAll(glyphCommands);
 ```
 
-**String Parsing as a Convenience:**
+**Why Both?**
 
-While command objects are the primary API, accepting SVG path data strings could be a useful convenience feature:
+- **Direct methods**: Ergonomic for manual/interactive use, no boilerplate
+- **Command objects**: Essential for Text model integration and processing pre-existing command arrays
+- **Single implementation**: Direct methods internally create and execute command objects
+
+**String Parsing as Optional Convenience:**
+
+SVG path data string parsing could be included as an optional convenience:
 
 ```javascript
-// Optional convenience: parse SVG path string into command objects
+// Optional: parse SVG path string
 turtle.parsePathData('M 0,0 L 10,0 L 10,10 Z');
 ```
 
-This would internally convert the string to command objects before execution, maintaining a single execution path while providing ergonomic benefits for certain use cases.
-
 **Open Questions:**
-- Should string parsing be included as a convenience, or is it too problematic (parsing complexity, relative vs. absolute coordinates)?
-- Should turtle-specific commands (forward, left, right) be separate from path commands, or unified under the same command object structure?
+- Should string parsing be included, or is it too complex (relative vs. absolute coordinates, arc parameters)?
+- Should there be a method to retrieve the command history as an array of command objects?
 
 ### 3. Self-Intersection Detection and Cleanup
 
@@ -181,13 +183,27 @@ var turtle = new makerjs.models.Turtle(options);
 // - trackIntersections: boolean - enable self-intersection detection
 // - layer: string - layer name for paths
 
-// Execute a single command object
-turtle.execute({ command: 'moveTo', args: [0, 0] });
-turtle.execute({ command: 'lineTo', args: [10, 0] });
-turtle.execute({ command: 'forward', args: [10] });
-turtle.execute({ command: 'right', args: [90] });
+// Direct method calls (primary API)
+turtle.moveTo(0, 0);
+turtle.lineTo(10, 0);
+turtle.lineTo(10, 10);
+turtle.closePath();
 
-// Execute multiple command objects
+// Turtle-specific methods
+turtle.forward(10);
+turtle.back(5);
+turtle.right(90);
+turtle.left(45);
+
+// Curve methods
+turtle.bezierCurveTo(15, 0, 15, 5, 10, 10);
+turtle.quadraticCurveTo(5, 5, 0, 10);
+
+// Pen control
+turtle.penUp();
+turtle.penDown();
+
+// Execute command objects (for batch operations like font glyphs)
 turtle.executeAll([
   { command: 'moveTo', args: [0, 0] },
   { command: 'lineTo', args: [10, 0] },
@@ -213,20 +229,15 @@ var cleanedModel = turtle.cleanupIntersections(options);
 
 ## Examples
 
-### Example 1: Simple Square with Command Objects
+### Example 1: Simple Square with Direct Methods
 ```javascript
 var turtle = new makerjs.models.Turtle();
 
-// Draw a square using command objects
-turtle.executeAll([
-  { command: 'forward', args: [10] },
-  { command: 'right', args: [90] },
-  { command: 'forward', args: [10] },
-  { command: 'right', args: [90] },
-  { command: 'forward', args: [10] },
-  { command: 'right', args: [90] },
-  { command: 'forward', args: [10] }
-]);
+// Draw a square using direct method calls
+for (var i = 0; i < 4; i++) {
+  turtle.forward(10);
+  turtle.right(90);
+}
 // Creates a closed chain forming a square
 ```
 
@@ -234,13 +245,11 @@ turtle.executeAll([
 ```javascript
 var turtle = new makerjs.models.Turtle({ trackIntersections: true });
 
-// Draw a 5-pointed star using command objects
-var commands = [];
+// Draw a 5-pointed star using direct method calls
 for (var i = 0; i < 5; i++) {
-  commands.push({ command: 'forward', args: [20] });
-  commands.push({ command: 'right', args: [144] });  // 180 - 36 degrees
+  turtle.forward(20);
+  turtle.right(144);  // 180 - 36 degrees
 }
-turtle.executeAll(commands);
 
 // The star crosses itself, intersections are tracked
 var intersections = turtle.getIntersections();
@@ -251,22 +260,27 @@ var starModel = turtle.cleanupIntersections({ mode: 'close' });
 // Creates separate polygons for the inner pentagon and outer points
 ```
 
-### Example 3: Path Commands for Glyph Creation
+### Example 3: Glyph Creation from Command Objects
 ```javascript
 var turtle = new makerjs.models.Turtle();
 
-// Create a custom glyph using path command objects
-// (similar to how Text model processes font glyph commands)
-turtle.executeAll([
+// Process command objects from a font glyph
+// (this is where command objects make sense - batch processing)
+var glyphCommands = [
   { command: 'moveTo', args: [0, 0] },
   { command: 'lineTo', args: [10, 0] },
   { command: 'bezierCurveTo', args: [15, 0, 15, 5, 10, 10] },
   { command: 'lineTo', args: [0, 10] },
   { command: 'closePath', args: [] }
-]);
+];
+turtle.executeAll(glyphCommands);
 
-// Optional: parse SVG path string as a convenience
-turtle.parsePathData('M 0,0 L 10,0 C 15,0 15,5 10,10 L 0,10 Z');
+// Or use direct methods for manual drawing
+turtle.moveTo(20, 0);
+turtle.lineTo(30, 0);
+turtle.bezierCurveTo(35, 0, 35, 5, 30, 10);
+turtle.lineTo(20, 10);
+turtle.closePath();
 ```
 
 ## Open Questions

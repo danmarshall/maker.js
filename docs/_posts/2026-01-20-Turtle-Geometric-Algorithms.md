@@ -16,14 +16,14 @@ When a turtle creates paths sequentially, it's possible to inadvertently create 
 Consider this sequence of turtle commands:
 
 ```javascript
-turtle.execute({ command: 'moveTo', args: [0, 0] });
-turtle.execute({ command: 'lineTo', args: [10, 0] });
-turtle.execute({ command: 'lineTo', args: [10, 21] });
-turtle.execute({ command: 'lineTo', args: [9, 20] });  // Creates a small triangle
-turtle.execute({ command: 'lineTo', args: [20, 20] }); // Crosses back - triangle position unknown
-turtle.execute({ command: 'lineTo', args: [20, 30] });
-turtle.execute({ command: 'lineTo', args: [0, 30] });
-turtle.execute({ command: 'closePath', args: [] });    // Now we can determine if triangle is inside
+turtle.moveTo(0, 0);
+turtle.lineTo(10, 0);
+turtle.lineTo(10, 21);
+turtle.lineTo(9, 20);   // Creates a small triangle
+turtle.lineTo(20, 20);  // Crosses back - triangle position unknown
+turtle.lineTo(20, 30);
+turtle.lineTo(0, 30);
+turtle.closePath();     // Now we can determine if triangle is inside
 ```
 
 In this example:
