@@ -15,6 +15,10 @@ Turtle graphics is a drawing paradigm where a virtual "turtle" moves around the 
 
 A Turtle in Maker.js would provide an alternative, imperative API for creating drawings, complementing the existing declarative model approach. The turtle would maintain state (position, heading/angle) and translate movement commands into Maker.js paths.
 
+### Primary Use Case: Text Model Glyph Creation
+
+One of the key applications for a Turtle would be in the Text model for creating glyphs. The Text model already processes font glyph commands (like `moveTo`, `lineTo`, `bezierCurveTo`, `quadraticCurveTo`, `closePath`) from font files. A Turtle could provide a programmatic way to create custom glyphs or modify existing ones using the same command-based approach.
+
 ## Key Features
 
 ### 1. Implicit Chain Creation
@@ -39,42 +43,65 @@ turtle.forward(5);   // Creates another line path connected to the first
 
 The turtle's output would be a standard Maker.js model containing paths that naturally form chains, making them compatible with all existing chain operations (filleting, dogbone joints, exporting, etc.).
 
-### 2. SVG Path Language Commands
+### 2. Command Object API
 
-**A turtle might take in SVG path language commands one at a time.**
+**A turtle should accept command objects, similar to how the Text model processes glyph commands.**
 
-The turtle could accept SVG path commands as an alternative input method:
+Following the pattern established in the Text model, which processes font glyph command objects, the Turtle would accept command objects as its primary API. This provides a clean, consistent approach without the need for dual APIs.
 
-- **Single command mode**: Process one SVG command at a time
-- **Batch mode**: Possibly ingest an entire SVG path with multiple commands (needs consideration)
+**Command Objects to Support:**
+- `{ command: 'moveTo', args: [x, y] }` - Move without drawing
+- `{ command: 'lineTo', args: [x, y] }` - Draw a line
+- `{ command: 'bezierCurveTo', args: [x1, y1, x2, y2, x, y] }` - Draw a cubic Bezier curve
+- `{ command: 'quadraticCurveTo', args: [x1, y1, x, y] }` - Draw a quadratic Bezier curve
+- `{ command: 'closePath', args: [] }` - Close the current path
 
-**SVG Commands to Support:**
-- `M` (moveto) - Move without drawing
-- `L` (lineto) - Draw a line
-- `H` (horizontal lineto) - Draw horizontal line
-- `V` (vertical lineto) - Draw vertical line
-- `A` (elliptical arc) - Draw an arc
-- `C` (cubic bezier) - Draw a Bezier curve
-- `Q` (quadratic bezier) - Draw a quadratic Bezier curve
-- `Z` (closepath) - Close the current path
+Additionally, turtle-specific commands could be supported:
+- `{ command: 'forward', args: [distance] }` - Move forward in current heading
+- `{ command: 'back', args: [distance] }` - Move backward
+- `{ command: 'left', args: [angle] }` - Turn left (degrees)
+- `{ command: 'right', args: [angle] }` - Turn right (degrees)
 
 **Example conceptual API:**
 ```javascript
 var turtle = new makerjs.models.Turtle();
 
-turtle.command('M', [0, 0]);    // Move to origin
-turtle.command('L', [10, 0]);   // Line to (10, 0)
-turtle.command('L', [10, 10]);  // Line to (10, 10)
-turtle.command('Z');            // Close path
+// Execute commands one at a time
+turtle.execute({ command: 'moveTo', args: [0, 0] });
+turtle.execute({ command: 'lineTo', args: [10, 0] });
+turtle.execute({ command: 'lineTo', args: [10, 10] });
+turtle.execute({ command: 'closePath', args: [] });
 
-// Or possibly:
+// Or execute an array of commands
+turtle.executeAll([
+  { command: 'moveTo', args: [0, 0] },
+  { command: 'lineTo', args: [10, 0] },
+  { command: 'bezierCurveTo', args: [15, 0, 15, 5, 10, 10] },
+  { command: 'closePath', args: [] }
+]);
+
+// Turtle-specific commands work alongside path commands
+turtle.executeAll([
+  { command: 'forward', args: [10] },
+  { command: 'right', args: [90] },
+  { command: 'forward', args: [10] }
+]);
+```
+
+**String Parsing as a Convenience:**
+
+While command objects are the primary API, accepting SVG path data strings could be a useful convenience feature:
+
+```javascript
+// Optional convenience: parse SVG path string into command objects
 turtle.parsePathData('M 0,0 L 10,0 L 10,10 Z');
 ```
 
+This would internally convert the string to command objects before execution, maintaining a single execution path while providing ergonomic benefits for certain use cases.
+
 **Open Questions:**
-- Should the turtle support parsing and executing complete SVG path strings with multiple commands?
-- How would relative vs. absolute coordinates be handled?
-- Should there be a mode switch between "turtle semantics" (forward/turn) and "SVG semantics" (absolute coordinates)?
+- Should string parsing be included as a convenience, or is it too problematic (parsing complexity, relative vs. absolute coordinates)?
+- Should turtle-specific commands (forward, left, right) be separate from path commands, or unified under the same command object structure?
 
 ### 3. Self-Intersection Detection and Cleanup
 
@@ -139,11 +166,12 @@ The Turtle model would integrate seamlessly with existing Maker.js features:
 - **Transformations**: Turtle models can be scaled, rotated, mirrored like any other model
 - **Layers**: Turtle can draw on specific layers
 - **Fillets and dogbones**: Apply to turtle-generated chains
+- **Text model**: Use Turtle to programmatically create or modify glyphs using the same command object pattern
 
 ## Potential API Design
 
 ```javascript
-// Basic turtle
+// Basic turtle with options
 var turtle = new makerjs.models.Turtle(options);
 
 // Options might include:
@@ -153,20 +181,22 @@ var turtle = new makerjs.models.Turtle(options);
 // - trackIntersections: boolean - enable self-intersection detection
 // - layer: string - layer name for paths
 
-// Turtle commands (Logo-style)
-turtle.forward(distance);
-turtle.back(distance);
-turtle.right(angle);  // degrees
-turtle.left(angle);
-turtle.penUp();
-turtle.penDown();
-turtle.setHeading(angle);
-turtle.setPosition(x, y);
-turtle.home();  // return to origin with heading 0
+// Execute a single command object
+turtle.execute({ command: 'moveTo', args: [0, 0] });
+turtle.execute({ command: 'lineTo', args: [10, 0] });
+turtle.execute({ command: 'forward', args: [10] });
+turtle.execute({ command: 'right', args: [90] });
 
-// SVG path commands
-turtle.command(commandLetter, parameters);
-turtle.parsePathData(svgPathString);  // possibly
+// Execute multiple command objects
+turtle.executeAll([
+  { command: 'moveTo', args: [0, 0] },
+  { command: 'lineTo', args: [10, 0] },
+  { command: 'bezierCurveTo', args: [15, 0, 15, 5, 10, 10] },
+  { command: 'closePath', args: [] }
+]);
+
+// Optional convenience method for SVG path strings
+turtle.parsePathData('M 0,0 L 10,0 L 10,10 Z');
 
 // Get current state
 var pos = turtle.getPosition();  // [x, y]
@@ -183,13 +213,20 @@ var cleanedModel = turtle.cleanupIntersections(options);
 
 ## Examples
 
-### Example 1: Simple Square
+### Example 1: Simple Square with Command Objects
 ```javascript
 var turtle = new makerjs.models.Turtle();
-for (var i = 0; i < 4; i++) {
-  turtle.forward(10);
-  turtle.right(90);
-}
+
+// Draw a square using command objects
+turtle.executeAll([
+  { command: 'forward', args: [10] },
+  { command: 'right', args: [90] },
+  { command: 'forward', args: [10] },
+  { command: 'right', args: [90] },
+  { command: 'forward', args: [10] },
+  { command: 'right', args: [90] },
+  { command: 'forward', args: [10] }
+]);
 // Creates a closed chain forming a square
 ```
 
@@ -197,11 +234,13 @@ for (var i = 0; i < 4; i++) {
 ```javascript
 var turtle = new makerjs.models.Turtle({ trackIntersections: true });
 
-// Draw a 5-pointed star
+// Draw a 5-pointed star using command objects
+var commands = [];
 for (var i = 0; i < 5; i++) {
-  turtle.forward(20);
-  turtle.right(144);  // 180 - 36 degrees
+  commands.push({ command: 'forward', args: [20] });
+  commands.push({ command: 'right', args: [144] });  // 180 - 36 degrees
 }
+turtle.executeAll(commands);
 
 // The star crosses itself, intersections are tracked
 var intersections = turtle.getIntersections();
@@ -212,25 +251,29 @@ var starModel = turtle.cleanupIntersections({ mode: 'close' });
 // Creates separate polygons for the inner pentagon and outer points
 ```
 
-### Example 3: SVG Path Import
+### Example 3: Path Commands for Glyph Creation
 ```javascript
 var turtle = new makerjs.models.Turtle();
 
-// Parse SVG path commands one at a time
-turtle.command('M', [0, 0]);
-turtle.command('L', [10, 0]);
-turtle.command('A', [5, 5, 0, 0, 1, 20, 10]);  // arc
-turtle.command('Z');  // close path
+// Create a custom glyph using path command objects
+// (similar to how Text model processes font glyph commands)
+turtle.executeAll([
+  { command: 'moveTo', args: [0, 0] },
+  { command: 'lineTo', args: [10, 0] },
+  { command: 'bezierCurveTo', args: [15, 0, 15, 5, 10, 10] },
+  { command: 'lineTo', args: [0, 10] },
+  { command: 'closePath', args: [] }
+]);
 
-// Or potentially parse entire path string
-turtle.parsePathData('M 0,0 L 10,0 A 5,5 0 0 1 20,10 Z');
+// Optional: parse SVG path string as a convenience
+turtle.parsePathData('M 0,0 L 10,0 C 15,0 15,5 10,10 L 0,10 Z');
 ```
 
 ## Open Questions
 
-1. **API Style**: Should we favor Logo-style commands (forward/turn) or SVG-style (absolute/relative coordinates), or support both?
+1. **Command Object Structure**: Should turtle-specific commands (forward, left, right) use the same command object structure as path commands (moveTo, lineTo, etc.), or should they be separate for better ergonomics?
 
-2. **SVG Path Parsing**: Should the turtle support full SVG path data strings, or only individual commands? Full path strings are convenient but may conflict with the step-by-step nature of turtle graphics.
+2. **SVG Path String Parsing**: Is string parsing (e.g., `parsePathData('M 0,0 L 10,0 Z')`) worth including as a convenience feature despite the complexity, or should we stick to command objects only?
 
 3. **Intersection Detection**: 
    - Should intersection detection be always-on or opt-in?
@@ -243,16 +286,17 @@ turtle.parsePathData('M 0,0 L 10,0 A 5,5 0 0 1 20,10 Z');
 
 6. **Multiple Turtles**: Should we support multiple turtles in the same drawing, potentially creating different chains simultaneously?
 
-7. **Arc Handling**: In Logo-style mode, should we provide an `arc(radius, angle)` command, or stick to line segments and let users compose arcs from forward/turn sequences?
+7. **Arc Handling**: Should we provide an `arc` command object (e.g., `{ command: 'arc', args: [radius, angle] }`), or rely on bezierCurveTo for curves?
 
 ## Benefits
 
-- **Intuitive API**: Turtle graphics is easy to learn and teach
+- **Consistent API**: Command objects align with existing Text model pattern
+- **Intuitive**: Easy to learn and teach, especially for glyph creation
 - **Procedural Drawing**: Natural for algorithmic/generative art
 - **Chain-First**: Output is inherently suitable for CNC/laser cutting
 - **Complementary**: Adds a procedural approach alongside the declarative model approach
+- **Text Model Integration**: Can be used to programmatically create or modify glyphs
 - **Educational**: Great for teaching programming and geometry
-- **SVG Bridge**: Provides another path for importing SVG content
 
 ## Next Steps
 
