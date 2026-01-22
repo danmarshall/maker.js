@@ -283,6 +283,219 @@ turtle.lineTo(20, 10);
 turtle.closePath();
 ```
 
+## Concrete Use Case Examples
+
+These examples demonstrate the Turtle API with real-world use cases to evaluate ergonomics and identify the best approach.
+
+### Example A: Lowercase Letter 'u' (Text Model Use Case)
+
+The lowercase 'u' has both straight and curved elements, making it a good test case for font glyph creation. In the Text model, the turtle would receive commands one at a time from font data.
+
+**Scenario: Processing font glyph commands sequentially**
+
+```javascript
+// The Text model would call the turtle for each command
+var turtle = new makerjs.models.Turtle();
+
+// Start at bottom left
+turtle.moveTo(0, 0);
+
+// Draw left stem upward
+turtle.lineTo(0, 50);
+
+// Draw top horizontal
+turtle.lineTo(10, 50);
+
+// Draw right side down with curve at bottom
+turtle.lineTo(10, 15);
+
+// Quadratic curve for the bottom-right rounded corner
+// Control point at (10, 5), end point at (20, 5)
+turtle.quadraticCurveTo(10, 5, 20, 5);
+
+// Draw bottom horizontal
+turtle.lineTo(30, 5);
+
+// Draw right stem upward
+turtle.lineTo(30, 50);
+
+// Top right
+turtle.lineTo(40, 50);
+
+// Draw down
+turtle.lineTo(40, 5);
+
+// Curve bottom-right corner
+turtle.quadraticCurveTo(40, -5, 30, -5);
+
+// Bottom stroke
+turtle.lineTo(10, -5);
+
+// Curve bottom-left corner  
+turtle.quadraticCurveTo(0, -5, 0, 5);
+
+// Close the path
+turtle.closePath();
+
+// Result: A complete 'u' glyph ready for Text model
+var glyphModel = turtle.toModel();
+```
+
+**Alternative: Using command objects (as Text model receives from fonts)**
+
+```javascript
+var turtle = new makerjs.models.Turtle();
+
+// Text model would pass an array of commands from the font
+var uGlyphCommands = [
+  { command: 'moveTo', args: [0, 0] },
+  { command: 'lineTo', args: [0, 50] },
+  { command: 'lineTo', args: [10, 50] },
+  { command: 'lineTo', args: [10, 15] },
+  { command: 'quadraticCurveTo', args: [10, 5, 20, 5] },
+  { command: 'lineTo', args: [30, 5] },
+  { command: 'lineTo', args: [30, 50] },
+  { command: 'lineTo', args: [40, 50] },
+  { command: 'lineTo', args: [40, 5] },
+  { command: 'quadraticCurveTo', args: [40, -5, 30, -5] },
+  { command: 'lineTo', args: [10, -5] },
+  { command: 'quadraticCurveTo', args: [0, -5, 0, 5] },
+  { command: 'closePath', args: [] }
+];
+
+// Process all commands at once
+turtle.executeAll(uGlyphCommands);
+
+// Or process one command at a time (how Text model would do it)
+for (var cmd of uGlyphCommands) {
+  turtle[cmd.command](...cmd.args);
+}
+```
+
+**Key Insight for Text Model Integration:** The turtle needs to support both calling patterns:
+1. `turtle.moveTo(x, y)` - direct method call
+2. `turtle.executeAll(commands)` - batch processing
+3. Individual commands via method name lookup - `turtle[cmd.command](...cmd.args)`
+
+### Example B: L-Shaped Part with Rounded Corners
+
+An L-shaped bracket with all rounded corners is cumbersome with the current Maker.js declarative API but natural with a turtle.
+
+**Dimensions:**
+- Vertical arm: 100mm tall, 20mm wide
+- Horizontal arm: 80mm long, 20mm wide
+- All corners: 5mm radius fillets
+
+```javascript
+var turtle = new makerjs.models.Turtle();
+var cornerRadius = 5;
+
+// Start at bottom-left outer corner
+turtle.moveTo(0, 0);
+
+// Go up the left side
+turtle.lineTo(0, 100);
+
+// Top-left outer corner - arc turning right
+turtle.arc(cornerRadius, 90);  // or arcTo with radius
+
+// Go right along the top
+turtle.lineTo(20 - cornerRadius, 100 + cornerRadius);
+
+// Top-right outer corner - arc turning down  
+turtle.arc(cornerRadius, 90);
+
+// Go down the outer right side
+turtle.lineTo(20, 20 + cornerRadius);
+
+// Inner corner - arc turning right
+turtle.arc(cornerRadius, 90);
+
+// Go right along the inner horizontal
+turtle.lineTo(80 - cornerRadius, 20);
+
+// Outer bottom-right corner - arc turning down
+turtle.arc(cornerRadius, 90);
+
+// Go down to bottom
+turtle.lineTo(80, cornerRadius);
+
+// Bottom-right corner - arc turning left
+turtle.arc(cornerRadius, 90);
+
+// Go left along the bottom
+turtle.lineTo(cornerRadius, 0);
+
+// Bottom-left corner - arc back to start
+turtle.arc(cornerRadius, 90);
+
+turtle.closePath();
+
+var lBracket = turtle.toModel();
+```
+
+**Alternative API consideration - using relative movements:**
+
+```javascript
+var turtle = new makerjs.models.Turtle();
+var r = 5;  // corner radius
+
+turtle.moveTo(0, 0);
+turtle.lineToRelative(0, 100);     // up
+turtle.arcRelative(r, 90);          // curve right
+turtle.lineToRelative(20 - 2*r, 0); // right
+turtle.arcRelative(r, 90);          // curve down
+turtle.lineToRelative(0, -(80 - 2*r)); // down
+turtle.arcRelative(r, 90);          // curve right
+turtle.lineToRelative(60 - 2*r, 0); // right
+turtle.arcRelative(r, 90);          // curve down
+turtle.lineToRelative(0, -(20 - 2*r)); // down
+turtle.arcRelative(r, 90);          // curve left
+turtle.lineToRelative(-(80 - 2*r), 0); // left
+turtle.arcRelative(r, 90);          // curve up to close
+turtle.closePath();
+```
+
+**Even simpler - using forward/turn style:**
+
+```javascript
+var turtle = new makerjs.models.Turtle();
+turtle.penUp();
+turtle.moveTo(0, 0);
+turtle.penDown();
+turtle.setHeading(90);  // Face up
+
+var r = 5;
+
+// Vertical arm
+turtle.forward(100 - r);
+turtle.arc(r, 90);       // Turn right with arc
+turtle.forward(20 - 2*r);
+turtle.arc(r, 90);       // Turn down with arc
+
+// Down to horizontal arm
+turtle.forward(80 - 2*r);
+turtle.arc(r, 90);       // Turn right with arc
+
+// Horizontal arm
+turtle.forward(60 - 2*r);
+turtle.arc(r, 90);       // Turn down with arc
+turtle.forward(20 - 2*r);
+turtle.arc(r, 90);       // Turn left with arc
+
+// Back along bottom
+turtle.forward(80 - 2*r);
+turtle.arc(r, 90);       // Turn up with arc
+
+turtle.closePath();
+```
+
+**Discussion Points:**
+1. Should `arc()` method exist, or should users use `bezierCurveTo()` for curves?
+2. Are relative movement methods (`lineToRelative`, `arcRelative`) worth adding?
+3. Does the forward/turn style (turtle heading) make sense for CAD-style drawings, or just absolute coordinates?
+4. How should `arc()` work - by angle turned, or by absolute angle, or both?
+
 ## Open Questions
 
 1. **Command Object Structure**: Should turtle-specific commands (forward, left, right) use the same command object structure as path commands (moveTo, lineTo, etc.), or should they be separate for better ergonomics?
