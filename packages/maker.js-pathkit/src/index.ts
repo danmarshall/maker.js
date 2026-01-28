@@ -9,6 +9,7 @@ import PathKitInit from 'pathkit-wasm';
 
 // Re-export integration functions
 export * from './makerjs-integration';
+export * from './fontkit-integration';
 
 let PathKit: any = null;
 
@@ -128,23 +129,14 @@ export function getPathBounds(path: any): { left: number; top: number; right: nu
 
 /**
  * Convert font glyph to PathKit path
- * This is a placeholder for font ingestion functionality
- * Actual implementation would require font parsing library integration
+ * @deprecated Use fontGlyphToPath from fontkit-integration module instead
  * 
  * @param fontData Font data buffer
  * @param glyphId Glyph ID to convert
  * @returns PathKit path representing the glyph
  */
-export async function fontGlyphToPath(fontData: ArrayBuffer, glyphId: number): Promise<any> {
-    const pk = getPathKit();
-    
-    // This is a placeholder implementation
-    // In a real implementation, you would:
-    // 1. Parse the font using a library like fontkit or opentype.js
-    // 2. Extract the glyph outline
-    // 3. Convert the outline to PathKit path commands
-    
-    throw new Error('fontGlyphToPath not yet fully implemented. Integration with font parsing library required.');
+export async function fontGlyphToPathLegacy(fontData: ArrayBuffer, glyphId: number): Promise<any> {
+    throw new Error('fontGlyphToPathLegacy is deprecated. Use loadFont() and fontGlyphToPath() from fontkit-integration module instead.');
 }
 
 /**
