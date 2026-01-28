@@ -68,7 +68,7 @@ const result = await makerPathKit.booleanOperation(model1, model2, 'union');
 
 Initialize the PathKit WASM module. Must be called before using other functions.
 
-### `loadFont(fontSource: string | ArrayBuffer | Buffer): Promise<Font>`
+### `loadFont(fontSource: string | Buffer): Promise<Font>`
 
 Load a font from a file path or buffer. Returns a fontkit Font object.
 

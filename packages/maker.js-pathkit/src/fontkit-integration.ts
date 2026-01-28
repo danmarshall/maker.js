@@ -45,6 +45,10 @@ export function fontkitGlyphPathToPathKit(glyphPath: any, scale: number = 1): an
             case 'closePath':
                 skPath.close();
                 break;
+            default:
+                // Unknown command type - log warning for debugging
+                console.warn(`Unknown fontkit path command: ${cmd.command}`);
+                break;
         }
     }
     
@@ -82,6 +86,11 @@ export function fontGlyphToPath(font: any, glyphId: number | string, fontSize: n
         throw new Error(`Glyph not found: ${glyphId}`);
     }
     
+    // Validate font metrics
+    if (!font.unitsPerEm || font.unitsPerEm === 0) {
+        throw new Error('Invalid font: unitsPerEm is zero or undefined');
+    }
+    
     // Calculate scale
     const scale = fontSize / font.unitsPerEm;
     
@@ -100,6 +109,11 @@ export function fontGlyphToPath(font: any, glyphId: number | string, fontSize: n
 export function textToPathKitPaths(font: any, text: string, fontSize: number = 72): Array<{ path: any, x: number, y: number, glyph: any }> {
     if (!pathkit.isInitialized()) {
         throw new Error('PathKit must be initialized before converting text');
+    }
+    
+    // Validate font metrics
+    if (!font.unitsPerEm || font.unitsPerEm === 0) {
+        throw new Error('Invalid font: unitsPerEm is zero or undefined');
     }
     
     const run = font.layout(text);
@@ -150,6 +164,11 @@ export function textToPathKit(font: any, text: string, fontSize: number = 72): a
         return new pk.SkPath();
     }
     
+    if (paths.length === 1) {
+        // Only one path, return it directly
+        return paths[0].path;
+    }
+    
     // Combine all paths into one
     const pk = pathkit.getPathKit();
     let combined = paths[0].path;
@@ -157,10 +176,15 @@ export function textToPathKit(font: any, text: string, fontSize: number = 72): a
     for (let i = 1; i < paths.length; i++) {
         const next = pk.MakeFromOp(combined, paths[i].path, pk.PathOp.UNION);
         if (i > 1) {
-            combined.delete(); // Clean up intermediate results
+            combined.delete(); // Clean up intermediate results (but not the first path)
         }
         combined = next;
         paths[i].path.delete(); // Clean up source paths
+    }
+    
+    // Clean up the original first path since we've created a new combined one
+    if (paths.length > 1) {
+        paths[0].path.delete();
     }
     
     return combined;
