@@ -53,7 +53,34 @@ console.log(makerPathKit.pathToSVGString(combinedPath));
 combinedPath.delete();
 ```
 
-### Boolean Operations
+### Boolean Operations with Maker.js Integration
+
+```javascript
+const makerPathKit = require('maker.js-pathkit');
+const makerjs = require('makerjs');
+
+// Initialize PathKit
+await makerPathKit.init();
+
+// Create some Maker.js models
+const model1 = new makerjs.models.Rectangle(100, 100);
+const model2 = new makerjs.models.Circle(60);
+model2.origin = [50, 50];
+
+// Perform boolean operations using PathKit
+const unionModel = makerPathKit.booleanOperation(model1, model2, 'union', makerjs);
+const intersectModel = makerPathKit.booleanOperation(model1, model2, 'intersect', makerjs);
+const differenceModel = makerPathKit.booleanOperation(model1, model2, 'difference', makerjs);
+
+// Export results
+const svg = makerjs.exporter.toSVG(unionModel);
+console.log(svg);
+
+// Or use the helper to load makerjs
+const makerjs = makerPathKit.requireMakerJs();
+```
+
+### Direct PathKit Operations
 
 ```javascript
 const makerPathKit = require('maker.js-pathkit');
@@ -63,6 +90,38 @@ const result = await makerPathKit.booleanOperation(model1, model2, 'union');
 ```
 
 ## API
+
+### Maker.js Integration Functions
+
+### `modelToSVGPath(model: IModel, makerjs: any): string`
+
+Convert a Maker.js model to SVG path data string using makerjs.exporter.toSVGPathData.
+
+### `pathToSVGPathData(path: IPath, makerjs: any): string`
+
+Convert a single Maker.js path to SVG path data string.
+
+### `modelToPathKit(model: IModel, makerjs: any): SkPath`
+
+Convert a Maker.js model to a PathKit SkPath object.
+
+### `pathKitToModel(skPath: SkPath, makerjs: any): IModel`
+
+Convert a PathKit SkPath back to a Maker.js model using makerjs.importer.fromSVGPathData.
+
+### `booleanOperation(model1: IModel, model2: IModel, operation: string, makerjs: any): IModel`
+
+Perform boolean operations (union, intersection, difference, xor) on two Maker.js models using PathKit.
+
+### `simplifyModel(model: IModel, makerjs: any): IModel`
+
+Simplify a Maker.js model using PathKit path simplification.
+
+### `requireMakerJs(): any`
+
+Helper function to dynamically load the makerjs module.
+
+### FontKit Integration Functions
 
 ### `init(): Promise<void>`
 
@@ -84,9 +143,9 @@ Convert a text string to an array of PathKit paths (one per character) with posi
 
 Convert a text string to a single combined PathKit path with all characters merged.
 
-### `booleanOperation(model1: any, model2: any, operation: string): Promise<any>`
+### `booleanOperation(model1: IModel, model2: IModel, operation: string, makerjs: any): IModel`
 
-Perform boolean operations (union, intersection, difference, xor) on two Maker.js models.
+Perform boolean operations on two Maker.js models using PathKit for accurate results.
 
 ## License
 

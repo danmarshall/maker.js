@@ -9,7 +9,10 @@
     "declaration": true,
     "skipLibCheck": true,
     "moduleResolution": "node",
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "types": [
+      "node"
+    ]
   },
   "include": [
     "src/**/*.ts"

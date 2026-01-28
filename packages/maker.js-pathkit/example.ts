@@ -1,12 +1,12 @@
 /**
- * Example usage of maker.js-pathkit with fontkit integration
+ * Example usage of maker.js-pathkit with fontkit and makerjs integration
  */
 
 // Import the shim
 import * as makerPathKit from './src/index';
 
 async function exampleBooleanOps() {
-    console.log('=== Boolean Operations Example ===');
+    console.log('=== Boolean Operations Example (Direct PathKit) ===');
     
     // Initialize PathKit
     console.log('Initializing PathKit...');
@@ -32,6 +32,48 @@ async function exampleBooleanOps() {
     unionPath.delete();
 
     console.log('Boolean operations example completed!');
+}
+
+async function exampleMakerJsIntegration() {
+    console.log('\n=== Maker.js Integration Example ===');
+    
+    try {
+        // Load makerjs
+        const makerjs = makerPathKit.requireMakerJs();
+        console.log('MakerJs loaded successfully');
+        
+        // Create some Maker.js models
+        const model1 = new makerjs.models.Rectangle(100, 100);
+        const model2 = new makerjs.models.Circle(60);
+        model2.origin = [50, 50];
+        
+        console.log('Model 1 (Rectangle):', JSON.stringify(model1, null, 2));
+        console.log('Model 2 (Circle):', JSON.stringify(model2, null, 2));
+        
+        // Perform boolean union using PathKit
+        console.log('\nPerforming boolean union on Maker.js models...');
+        const unionModel = makerPathKit.booleanOperation(model1, model2, 'union', makerjs);
+        console.log('Union result:', JSON.stringify(unionModel, null, 2));
+        
+        // Perform boolean intersection
+        console.log('\nPerforming boolean intersection...');
+        const intersectModel = makerPathKit.booleanOperation(model1, model2, 'intersect', makerjs);
+        console.log('Intersection result:', JSON.stringify(intersectModel, null, 2));
+        
+        // Perform boolean difference
+        console.log('\nPerforming boolean difference...');
+        const differenceModel = makerPathKit.booleanOperation(model1, model2, 'difference', makerjs);
+        console.log('Difference result:', JSON.stringify(differenceModel, null, 2));
+        
+        // Export to SVG
+        const svg = makerjs.exporter.toSVG(unionModel);
+        console.log('\nExported SVG (first 200 chars):', svg.substring(0, 200) + '...');
+        
+        console.log('Maker.js integration example completed!');
+    } catch (error) {
+        console.error('Maker.js integration example error:', error);
+        console.log('Note: This example requires makerjs to be installed');
+    }
 }
 
 async function exampleFontIngestion() {
@@ -78,6 +120,7 @@ async function exampleFontIngestion() {
 async function main() {
     try {
         await exampleBooleanOps();
+        await exampleMakerJsIntegration();
         await exampleFontIngestion();
         console.log('\nAll examples completed successfully!');
     } catch (error) {
@@ -89,4 +132,5 @@ async function main() {
 if (require.main === module) {
     main().catch(console.error);
 }
+
 
