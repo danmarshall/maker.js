@@ -28,11 +28,11 @@ const makerjs = require('makerjs');
 // Initialize PathKit
 await makerPathKit.init();
 
-// Convert a font glyph to a Maker.js model
-const model = await makerPathKit.fontGlyphToModel(fontData, glyphId);
+// Convert a font glyph to a PathKit path (placeholder)
+const path = await makerPathKit.fontGlyphToPath(fontData, glyphId);
 
-// Export as SVG
-const svg = makerjs.exporter.toSVG(model);
+// Convert the PathKit path to SVG for use with Maker.js
+const svg = makerPathKit.pathToSVGString(path);
 ```
 
 ### Boolean Operations
@@ -50,11 +50,11 @@ const result = await makerPathKit.booleanOperation(model1, model2, 'union');
 
 Initialize the PathKit WASM module. Must be called before using other functions.
 
-### `fontGlyphToModel(fontData: ArrayBuffer, glyphId: number): Promise<IModel>`
+### `fontGlyphToPath(fontData: ArrayBuffer, glyphId: number): Promise<any>`
 
-Convert a font glyph to a Maker.js model using PathKit.
+Convert a font glyph to a PathKit path. (Note: This is a placeholder - full implementation requires integration with a font parsing library)
 
-### `booleanOperation(model1: IModel, model2: IModel, operation: string): Promise<IModel>`
+### `booleanOperation(model1: any, model2: any, operation: string): Promise<any>`
 
 Perform boolean operations (union, intersection, difference, xor) on two Maker.js models.
 

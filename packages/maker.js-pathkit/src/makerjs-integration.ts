@@ -62,10 +62,11 @@ export async function booleanOperation(model1: any, model2: any, operation: stri
     // Convert to PathKit paths
     const path1 = pathkit.pathFromSVGString(svg1);
     const path2 = pathkit.pathFromSVGString(svg2);
+    let result = null;
     
     try {
         // Perform boolean operation
-        const result = pathkit.booleanOp(path1, path2, operation);
+        result = pathkit.booleanOp(path1, path2, operation);
         
         // Convert back to SVG
         const resultSvg = pathkit.pathToSVGString(result);
@@ -76,6 +77,9 @@ export async function booleanOperation(model1: any, model2: any, operation: stri
         // Clean up PathKit objects
         path1.delete();
         path2.delete();
+        if (result) {
+            result.delete();
+        }
     }
 }
 
@@ -95,10 +99,11 @@ export async function simplifyModel(model: any): Promise<any> {
     
     // Convert to PathKit path
     const path = pathkit.pathFromSVGString(svgPath);
+    let simplified = null;
     
     try {
         // Simplify
-        const simplified = pathkit.simplifyPath(path);
+        simplified = pathkit.simplifyPath(path);
         
         // Convert back to SVG
         const resultSvg = pathkit.pathToSVGString(simplified);
@@ -108,5 +113,8 @@ export async function simplifyModel(model: any): Promise<any> {
     } finally {
         // Clean up PathKit objects
         path.delete();
+        if (simplified) {
+            simplified.delete();
+        }
     }
 }

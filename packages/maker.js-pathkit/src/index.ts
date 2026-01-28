@@ -55,7 +55,6 @@ export function getPathKit(): any {
  * Convert a PathKit SkPath to SVG path data string
  */
 export function pathToSVGString(skPath: any): string {
-    const pk = getPathKit();
     return skPath.toSVGString();
 }
 
@@ -73,7 +72,7 @@ export function pathFromSVGString(svgPath: string): any {
  * @param path1 First PathKit path
  * @param path2 Second PathKit path
  * @param operation Operation type: 'union', 'intersect', 'difference', 'xor'
- * @returns Result PathKit path
+ * @returns Result PathKit path, or null if operation fails
  */
 export function booleanOp(path1: any, path2: any, operation: string): any {
     const pk = getPathKit();
@@ -99,6 +98,9 @@ export function booleanOp(path1: any, path2: any, operation: string): any {
     }
     
     const result = pk.MakeFromOp(path1, path2, opType);
+    if (!result) {
+        throw new Error(`Boolean operation ${operation} failed or produced empty result`);
+    }
     return result;
 }
 
@@ -106,7 +108,6 @@ export function booleanOp(path1: any, path2: any, operation: string): any {
  * Simplify a PathKit path
  */
 export function simplifyPath(path: any): any {
-    const pk = getPathKit();
     const simplified = path.copy();
     simplified.simplify();
     return simplified;
