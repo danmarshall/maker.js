@@ -1,0 +1,30 @@
+{
+  "name": "maker.js-pathkit",
+  "version": "0.1.0",
+  "description": "Shim for maker.js integration with Skia PathKit for font ingestion and boolean operations",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p ."
+  },
+  "keywords": [
+    "makerjs",
+    "pathkit",
+    "skia",
+    "boolean",
+    "fonts",
+    "CAD"
+  ],
+  "author": "Dan Marshall",
+  "license": "Apache-2.0",
+  "peerDependencies": {
+    "makerjs": "*"
+  },
+  "dependencies": {
+    "@types/fontkit": "^2.0.8",
+    "@types/node": "^7.0.5",
+    "fontkit": "^2.0.4",
+    "makerjs": "*",
+    "pathkit-wasm": "^1.0.0"
+  }
+}
