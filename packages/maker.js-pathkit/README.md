@@ -75,9 +75,6 @@ const differenceModel = makerPathKit.booleanOperation(model1, model2, 'differenc
 // Export results
 const svg = makerjs.exporter.toSVG(unionModel);
 console.log(svg);
-
-// Or use the helper to load makerjs
-const makerjs = makerPathKit.requireMakerJs();
 ```
 
 ### Direct PathKit Operations
@@ -142,10 +139,6 @@ Convert a text string to an array of PathKit paths (one per character) with posi
 ### `textToPathKit(font: Font, text: string, fontSize?: number): SkPath`
 
 Convert a text string to a single combined PathKit path with all characters merged.
-
-### `booleanOperation(model1: IModel, model2: IModel, operation: string, makerjs: any): IModel`
-
-Perform boolean operations on two Maker.js models using PathKit for accurate results.
 
 ## License
 

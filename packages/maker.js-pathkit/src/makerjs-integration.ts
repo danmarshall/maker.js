@@ -7,7 +7,8 @@ import * as pathkit from './index';
 // Import MakerJs types
 type IModel = any; // Will be typed properly when makerjs is imported
 type IPath = any;
-type IPoint = any;
+
+type BooleanOperation = 'union' | 'intersect' | 'intersection' | 'difference' | 'xor';
 
 /**
  * Convert a Maker.js path to SVG path data string
@@ -104,7 +105,7 @@ export function modelToPathKit(model: IModel, makerjs: any): any {
  * @param makerjs MakerJs module reference
  * @returns Result model
  */
-export function booleanOperation(model1: IModel, model2: IModel, operation: string, makerjs: any): IModel {
+export function booleanOperation(model1: IModel, model2: IModel, operation: BooleanOperation, makerjs: any): IModel {
     if (!pathkit.isInitialized()) {
         throw new Error('PathKit must be initialized before performing boolean operations');
     }
@@ -179,7 +180,7 @@ export function requireMakerJs(): any {
     try {
         return require('makerjs');
     } catch (error) {
-        throw new Error('Could not load makerjs module. Ensure makerjs is installed as a dependency.');
+        throw new Error('Could not load MakerJs module. Ensure makerjs is installed as a dependency.');
     }
 }
 
